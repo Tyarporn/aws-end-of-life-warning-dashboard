@@ -1,0 +1,579 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  QuickSightUserName:
+    Type: String
+    Default: 'your-quicksight-username-here'
+    Description: QuickSight User for permission grants
+  InventoryBucketName:
+    Type: String
+    Default: 'your_bucket_name_here'
+    Description: Name of S3 bucket to place service scan .csv files (MUST ALREADY BE INITIALIZED)
+Resources:
+  dbDashboard:
+    Type: 'AWS::QuickSight::Dashboard'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      DashboardId: !Sub '${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Name: !Sub '${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Permissions:
+        - Actions:
+            - 'quicksight:DescribeDashboard'
+            - 'quicksight:ListDashboardVersions'
+            - 'quicksight:UpdateDashboardPermissions'
+            - 'quicksight:QueryDashboard'
+            - 'quicksight:UpdateDashboard'
+            - 'quicksight:DeleteDashboard'
+            - 'quicksight:DescribeDashboardPermissions'
+            - 'quicksight:UpdateDashboardPublishedVersion'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      SourceEntity:
+        SourceTemplate:
+          Arn: 'arn:aws:quicksight:us-east-1:294131514654:template/EoLDashboardDeploymentTemplate'
+          DataSetReferences:
+            - DataSetArn: !GetAtt rdsDataSet.Arn
+              DataSetPlaceholder: rdsData
+            - DataSetArn: !GetAtt lambdaDataSet.Arn
+              DataSetPlaceholder: lambdaData
+            - DataSetArn: !GetAtt ec2DataSet.Arn
+              DataSetPlaceholder: ec2Data
+  rdsDataSet:
+    Type: 'AWS::QuickSight::DataSet'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      ImportMode: SPICE
+      DataSetId: !Sub '${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Name: rdsDataSet
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSetPermissions'
+            - 'quicksight:DescribeDataSet'
+            - 'quicksight:DescribeDataSetPermissions'
+            - 'quicksight:PassDataSet'
+            - 'quicksight:DescribeIngestion'
+            - 'quicksight:ListIngestions'
+            - 'quicksight:UpdateDataSet'
+            - 'quicksight:DeleteDataSet'
+            - 'quicksight:CreateIngestion'
+            - 'quicksight:CancelIngestion'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      PhysicalTableMap:
+        CSVFile:
+          S3Source:
+            DataSourceArn: !GetAtt rdsDataSource.Arn
+            InputColumns:
+              - Name: version
+                Type: STRING
+              - Name: accountId
+                Type: STRING
+              - Name: configurationItemCaptureTime
+                Type: STRING
+              - Name: configurationItemStatus
+                Type: STRING
+              - Name: configurationStateId
+                Type: STRING
+              - Name: arn
+                Type: STRING
+              - Name: resourceType
+                Type: STRING
+              - Name: resourceId
+                Type: STRING
+              - Name: resourceName
+                Type: STRING
+              - Name: zipLocation
+                Type: STRING
+              - Name: awsRegion
+                Type: STRING
+              - Name: availabilityZone
+                Type: STRING
+              - Name: resourceCreationTime
+                Type: STRING
+              - Name: supplementaryConfiguration
+                Type: STRING
+              - Name: engine
+                Type: STRING
+              - Name: engineVersion
+                Type: STRING
+              - Name: latestVersion
+                Type: STRING
+              - Name: majVersionNumberStd
+                Type: STRING
+              - Name: totalMajVersions
+                Type: STRING
+              - Name: licenseModel
+                Type: STRING
+              - Name: storageType
+                Type: STRING
+              - Name: eolDate
+                Type: STRING
+      LogicalTableMap:
+        MyLogicalTable:
+          Source:
+            PhysicalTableId: CSVFile
+          Alias: MyCSVFile
+          DataTransforms:
+            - CastColumnTypeOperation:
+                ColumnName: version
+                NewColumnType: DECIMAL
+            - CastColumnTypeOperation:
+                ColumnName: accountId
+                NewColumnType: INTEGER
+            - CastColumnTypeOperation:
+                ColumnName: configurationStateId
+                NewColumnType: INTEGER
+            - CastColumnTypeOperation:
+                ColumnName: majVersionNumberStd
+                NewColumnType: INTEGER
+            - CastColumnTypeOperation:
+                ColumnName: totalMajVersions
+                NewColumnType: INTEGER
+    DependsOn:
+      - rdsDataSource
+  rdsDataSource:
+    Type: 'AWS::QuickSight::DataSource'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      DataSourceId: !Sub '${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSourcePermissions'
+            - 'quicksight:DescribeDataSource'
+            - 'quicksight:DescribeDataSourcePermissions'
+            - 'quicksight:PassDataSource'
+            - 'quicksight:UpdateDataSource'
+            - 'quicksight:DeleteDataSource'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      DataSourceParameters:
+        S3Parameters:
+          ManifestFileLocation:
+            Bucket: !Sub '${InventoryBucketName}'
+            # Key: quicksightmanifest.json # ------------------------------NEED TO UNCOMMENT -------------
+            Key: rdsmanifest.json
+      Name: rdsDataSource
+      Type: S3
+    DependsOn:
+      - eolBuildData
+  lambdaDataSet:
+    Type: 'AWS::QuickSight::DataSet'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      ImportMode: SPICE
+      DataSetId: !Sub 'Lambda-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Name: lambdaDataSet
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSetPermissions'
+            - 'quicksight:DescribeDataSet'
+            - 'quicksight:DescribeDataSetPermissions'
+            - 'quicksight:PassDataSet'
+            - 'quicksight:DescribeIngestion'
+            - 'quicksight:ListIngestions'
+            - 'quicksight:UpdateDataSet'
+            - 'quicksight:DeleteDataSet'
+            - 'quicksight:CreateIngestion'
+            - 'quicksight:CancelIngestion'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      PhysicalTableMap:
+        CSVFile:
+          S3Source:
+            DataSourceArn: !GetAtt lambdaDataSource.Arn
+            InputColumns:
+              - Name: functionName
+                Type: STRING
+              - Name: functionArn
+                Type: STRING
+              - Name: runtimeInfo
+                Type: STRING
+              - Name: runtimesBehind
+                Type: STRING
+              - Name: eolDate
+                Type: STRING
+              - Name: days_until_eol
+                Type: STRING
+      LogicalTableMap:
+        MyLogicalTable:
+          Source:
+            PhysicalTableId: CSVFile
+          Alias: MyCSVFile
+          DataTransforms:
+            - CastColumnTypeOperation:
+                ColumnName: runtimesBehind
+                NewColumnType: INTEGER
+            - CastColumnTypeOperation:
+                ColumnName: eolDate
+                NewColumnType: DATETIME
+            - CastColumnTypeOperation:
+                ColumnName: days_until_eol
+                NewColumnType: INTEGER
+    DependsOn:
+      - lambdaDataSource
+  lambdaDataSource:
+    Type: 'AWS::QuickSight::DataSource'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      DataSourceId: !Sub 'Lambda-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSourcePermissions'
+            - 'quicksight:DescribeDataSource'
+            - 'quicksight:DescribeDataSourcePermissions'
+            - 'quicksight:PassDataSource'
+            - 'quicksight:UpdateDataSource'
+            - 'quicksight:DeleteDataSource'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      DataSourceParameters:
+        S3Parameters:
+          ManifestFileLocation:
+            Bucket: !Sub '${InventoryBucketName}'
+            Key: lambdamanifest.json
+      Name: lambdaDataSource
+      Type: S3
+  ec2DataSet:
+    Type: 'AWS::QuickSight::DataSet'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      ImportMode: SPICE
+      DataSetId: !Sub 'EC2-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Name: ec2DataSet
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSetPermissions'
+            - 'quicksight:DescribeDataSet'
+            - 'quicksight:DescribeDataSetPermissions'
+            - 'quicksight:PassDataSet'
+            - 'quicksight:DescribeIngestion'
+            - 'quicksight:ListIngestions'
+            - 'quicksight:UpdateDataSet'
+            - 'quicksight:DeleteDataSet'
+            - 'quicksight:CreateIngestion'
+            - 'quicksight:CancelIngestion'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      PhysicalTableMap:
+        CSVFile:
+          S3Source:
+            DataSourceArn: !GetAtt ec2DataSource.Arn
+            InputColumns:
+              - Name: Name
+                Type: STRING
+              - Name: ImageId
+                Type: STRING
+              - Name: InstanceId
+                Type: STRING
+              - Name: InstanceType
+                Type: STRING
+              - Name: LaunchTime
+                Type: STRING
+              - Name: AvailabilityZone
+                Type: STRING
+              - Name: Platform
+                Type: STRING
+              - Name: days_old
+                Type: STRING
+              
+      LogicalTableMap:
+        MyLogicalTable:
+          Source:
+            PhysicalTableId: CSVFile
+          Alias: MyCSVFile
+          DataTransforms:
+            - CastColumnTypeOperation:
+                ColumnName: LaunchTime
+                NewColumnType: DATETIME
+            - CastColumnTypeOperation:
+                ColumnName: days_old
+                NewColumnType: INTEGER
+    DependsOn:
+      - ec2DataSource
+  ec2DataSource:
+    Type: 'AWS::QuickSight::DataSource'
+    Properties:
+      AwsAccountId: !Ref 'AWS::AccountId'
+      DataSourceId: !Sub 'EC2-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}'
+      Permissions:
+        - Actions:
+            - 'quicksight:UpdateDataSourcePermissions'
+            - 'quicksight:DescribeDataSource'
+            - 'quicksight:DescribeDataSourcePermissions'
+            - 'quicksight:PassDataSource'
+            - 'quicksight:UpdateDataSource'
+            - 'quicksight:DeleteDataSource'
+          Principal: !Sub >-
+            arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
+      DataSourceParameters:
+        S3Parameters:
+          ManifestFileLocation:
+            Bucket: !Sub '${InventoryBucketName}'
+            Key: ec2manifest.json
+      Name: ec2DataSource
+      Type: S3
+
+  rdsFunction:
+    DependsOn: eolDashboardEventbus
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub "${InventoryBucketName}"
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Sub "${InventoryBucketName}"
+        Key: dashboard-rds-function.zip
+      Description: ''
+      MemorySize: 128
+      Timeout: 900
+      Role:  !GetAtt pullerRole.Arn
+      Events:
+        Schedule1:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+        manualRule:
+            Type: EventBridgeRule
+            Properties:
+              EventBusName: !Ref eolDashboardEventbus
+              Pattern: {
+                 "account": [!Sub "${AWS::AccountId}"]
+              }
+    # DependsOn: dbDashboardBucket
+  ec2Function:
+    DependsOn: eolDashboardEventbus
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub "${InventoryBucketName}"
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Sub "${InventoryBucketName}"
+        Key: dashboard-ec2-function.zip
+      Description: ''
+      MemorySize: 128
+      Timeout: 900
+      Role: !GetAtt pullerRole.Arn
+      Events:
+        Schedule1:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+        manualRule:
+            Type: EventBridgeRule
+            Properties:
+              EventBusName: !Ref eolDashboardEventbus
+              Pattern: {
+                 "account": [!Sub "${AWS::AccountId}"]
+              }
+    # DependsOn: dbDashboardBucket
+  lambdaFunction:
+    DependsOn: eolDashboardEventbus
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub "${InventoryBucketName}"
+      Runtime: python3.9
+      CodeUri: 
+        Bucket: !Sub "${InventoryBucketName}"
+        Key: dashboard-lambda-function.zip
+      Description: ''
+      MemorySize: 128
+      Timeout: 900
+      Role: !GetAtt pullerRole.Arn
+      Events:
+        Schedule1:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+        manualRule:
+            Type: EventBridgeRule
+            Properties:
+              EventBusName: !Ref eolDashboardEventbus
+              Pattern: {
+                 "account": [!Sub "${AWS::AccountId}"]
+              }  
+    # DependsOn: dbDashboardBucket
+  dashboardInitFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          BUCKET_NAME: !Sub "${InventoryBucketName}"
+      Description: 'One time use function for csv initialization during deployment'
+      Runtime: python3.9
+      MemorySize: 128
+      Timeout: 900
+      Role: !GetAtt pullerRole.Arn
+      CodeUri: 
+        Bucket: !Sub "${InventoryBucketName}"
+        Key: dashboard-init-function.zip
+
+    
+  eventBridgeProxy:
+      Type: AWS::Serverless::Function
+      Properties:
+        Description: Proxy for manual refresh trigger
+        Handler: lambda_function.lambda_handler
+        MemorySize: 128
+        Role: !GetAtt proxyRole.Arn
+        Runtime: python3.9
+        Timeout: 900
+        CodeUri: 
+          Bucket: !Sub "${InventoryBucketName}"
+          Key: dashboard-proxy-function.zip
+        Events:
+          eolDashApi:
+              Type: Api
+              Properties:
+                  Method: get
+                  Path: /
+                  RestApiId: 
+                    Ref: eolDashApi
+
+        
+  eolBuildData:
+    Type: 'Custom::eolBuildData'
+    Properties:
+      ServiceToken: !GetAtt dashboardInitFunction.Arn
+      Name: eolBuildData
+    DependsOn: 
+        - dashboardInitFunction
+  
+  eolDashApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionBody: 
+        openapi: "3.0.1"
+        info:
+          title: "eol-dashboard-API"
+          description: "API for eol dashboard (TEST)"
+          version: "2022-07-07T17:49:38Z"
+        servers:
+        - url: "https://mgs1byhd7d.execute-api.us-east-1.amazonaws.com/{basePath}"
+          variables:
+            basePath:
+              default: "/stage4"
+        paths:
+          /:
+            get:
+              responses:
+                "200":
+                  description: "200 response"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                type: "aws"
+                httpMethod: "POST"
+                uri: !Sub "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${eventBridgeProxy}/invocations"
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: "when_no_match"
+                contentHandling: "CONVERT_TO_TEXT"
+            options:
+              responses:
+                "200":
+                  description: "200 response"
+                  headers:
+                    Access-Control-Allow-Origin:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Methods:
+                      schema:
+                        type: "string"
+                    Access-Control-Allow-Headers:
+                      schema:
+                        type: "string"
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Empty"
+              x-amazon-apigateway-integration:
+                type: "mock"
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                passthroughBehavior: "when_no_match"
+        components:
+          schemas:
+            Empty:
+              title: "Empty Schema"
+              type: "object"
+      # Name: eolDashApi
+      OpenApiVersion: "3.0.1"
+      StageName: stage4
+      Description: 'REST API that provides optional manual trigger for EOL Dashboard refresh'
+
+  eolDashboardEventbus:
+    Type: "AWS::Events::EventBus"
+    Properties: 
+      # EventSourceName: String
+      Name: 'eol-event-bus'
+
+  proxyRole:
+    Type: "AWS::IAM::Role"
+    Properties: 
+      AssumeRolePolicyDocument :
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Role for Proxy Function
+      Policies: 
+        - PolicyName: proxyRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:PutEvents"
+                Resource: '*'
+
+  pullerRole:
+      Type: "AWS::IAM::Role"
+      Properties: 
+        AssumeRolePolicyDocument :
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Description: Role for Puller Functions
+        Policies: 
+          - PolicyName: pullerRolePolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action: ["config:ListDiscoveredResources", "rds:DescribeDBEngineVersions", "config:BatchGetResourceConfig", "s3:PutObject", "ec2:DescribeInstances"]
+                  Resource: '*'
+
+  proxyLambdaApiPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: "lambda:InvokeFunction"
+      FunctionName: !Ref eventBridgeProxy
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${eolDashApi}/*/GET/"

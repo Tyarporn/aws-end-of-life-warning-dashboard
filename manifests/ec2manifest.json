@@ -1,0 +1,14 @@
+{
+    "fileLocations": [
+        {
+            "URIs": [
+                "s3://inv23/eolDashboardBucketAWS::EC2::Instance.csv"
+            ]
+        }
+    ],
+    "globalUploadSettings": {
+        "format": "CSV",
+	"delimiter": ",",
+	"containsHeader": "true"
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "fileLocations": [
+        {
+            "URIs": [
+                "s3://inv23/eolDashboardBucketAWS::Lambda::Function.csv"
+            ]
+        }
+    ],
+    "globalUploadSettings": {
+        "format": "CSV",
+	"delimiter": ",",
+	"containsHeader": "true"
+    }
+}
