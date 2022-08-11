@@ -30,7 +30,7 @@ Resources:
             arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
       SourceEntity:
         SourceTemplate:
-          Arn: 'arn:aws:quicksight:us-east-1:294131514654:template/EoLDashboardDeploymentTemplate'
+          Arn: 'arn:aws:quicksight:us-east-1:294131514654:template/EOLWarningDashboard'
           DataSetReferences:
             - DataSetArn: !GetAtt rdsDataSet.Arn
               DataSetPlaceholder: rdsData
