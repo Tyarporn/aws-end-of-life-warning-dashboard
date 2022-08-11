@@ -28,7 +28,7 @@ This project shows how to deploy an End-of-Life (EOL) warning dashboard that use
 
 ## Prerequisites
 * [An AWS account](https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fportal.aws.amazon.com%2Fbilling%2Fsignup%2Fresume&client_id=signup)
-* [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+* [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) (Users can alternatively deploy with the [AWS Cloud9 IDE](https://aws.amazon.com/cloud9/) terminal or the AWS CloudShell Terminal)
 * [An AWS Identity and Access Management](http://aws.amazon.com/iam)(IAM) role with appropriate access
 * [AWS QuickSight Enterprise Edition](https://aws.amazon.com/quicksight/pricing/)
 
@@ -52,7 +52,7 @@ At a high-level, hre are the steps to get the solution running:
 2. Deploy the soltion with the SAM CLI if step 1 is not used.
 3. Test the solution.
 
-Detailed steps are provided below
+Detailed steps are provided below:
 
 ### 1. Download the solution using Visual Studio Code and AWS Toolkit
 Download the code from the Github [repository](https://github.com/Tyarporn/aws-end-of-life-warning-dashboard).
@@ -76,8 +76,6 @@ To delete the application stack using the AWS CLI you can run the following comm
 ```
 aws cloudformation delete-stack --stack-name <stack-name>
 ```
-You can also delete the CloudFormation stack in VS Code by right clicking the project in the AWS Explorer pane as shown below:
+Alternatively, you can also delete the CloudFormation stack in VS Code by right clicking the project in the AWS Explorer pane as shown below:
 ![img](assets/samdeletess.png)
-    
-    
     
