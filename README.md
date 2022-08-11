@@ -48,3 +48,19 @@ aws-end-of-life-warning-dashboard/
 ```
 
 ## Solution Deployment Walkthrough
+At a high-level, hre are the steps to get the solution running:
+1. Deploy the solution using any IDE (This guide uses Visual Studio Code (VSCode) .
+2. Deploy the soltion with the SAM CLI if step 1 is not used.
+3. Test the solution.
+
+Detailed steps are provided below
+
+### 1. Deploy the solution using Visual Studio Code and AWS Toolkit
+    Download the code from the Github [repository](https://github.com/Tyarporn/aws-end-of-life-warning-dashboard).
+    ```
+    git clone https://github.com/Tyarporn/aws-end-of-life-warning-dashboard
+    ```
+    You can follow the steps [here](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html) to clone the project from Github
+    You should be able to see the project as shown here, please take a moment to review the project files:
+    
+    
