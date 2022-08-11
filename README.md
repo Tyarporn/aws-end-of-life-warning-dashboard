@@ -56,19 +56,19 @@ At a high-level, hre are the steps to get the solution running:
 Detailed steps are provided below
 
 ### 1. Deploy the solution using Visual Studio Code and AWS Toolkit
-    Download the code from the Github [repository](https://github.com/Tyarporn/aws-end-of-life-warning-dashboard).
-    ```
-    git clone https://github.com/Tyarporn/aws-end-of-life-warning-dashboard
-    ```
-    You can follow the steps [here](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html) to clone the project from Github
-    You should be able to see the project as shown here, please take a moment to review the project files:
+Download the code from the Github [repository](https://github.com/Tyarporn/aws-end-of-life-warning-dashboard).
+```
+git clone https://github.com/Tyarporn/aws-end-of-life-warning-dashboard
+```
+You can follow the steps [here](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html) to clone the project from Github
+You should be able to see the project as shown here, please take a moment to review the project files:
     
-    [img](assets/Screen Shot 2022-08-11 at 10.19.26 AM.png)
+![img](assets/filesss.png)
     
-    If you have not already, please set up your AWS crendentials for the [AWS Toolkit](https://aws.amazon.com/visualstudiocode/)
+If you have not already, please set up your AWS crendentials for the [AWS Toolkit](https://aws.amazon.com/visualstudiocode/)
     
-    Right click on the project and select "Deploy SAM Application" as shown below:
+Right click on the project and select "Deploy SAM Application" as shown below:
     
-    [img]()
+![img](assets/samdeployss.png)
     
     
