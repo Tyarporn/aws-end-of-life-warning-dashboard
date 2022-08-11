@@ -63,4 +63,12 @@ Detailed steps are provided below
     You can follow the steps [here](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html) to clone the project from Github
     You should be able to see the project as shown here, please take a moment to review the project files:
     
+    [img](assets/Screen Shot 2022-08-11 at 10.19.26 AM.png)
+    
+    If you have not already, please set up your AWS crendentials for the [AWS Toolkit](https://aws.amazon.com/visualstudiocode/)
+    
+    Right click on the project and select "Deploy SAM Application" as shown below:
+    
+    [img]()
+    
     
