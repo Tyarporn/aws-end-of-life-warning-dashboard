@@ -33,3 +33,18 @@ This project shows how to deploy an End-of-Life (EOL) warning dashboard that use
 * [An AWS Identity and Access Management](http://aws.amazon.com/iam)(IAM) role with appropriate access
 * [AWS QuickSight Enterprise Edition](https://aws.amazon.com/quicksight/pricing/)
 
+## Project Structure
+```
+aws-end-of-life-warning-dashboard/
+├── assets - This has the image files used for the README.md
+├── manifests - This holds the manifest JSON files that are needed for QuickSight. These are the ones you need to change before putting into S3  
+├── source
+    ├── dashboard-ec2-function.zip
+    ├── dashboard-init-function.zip
+    ├── dashboard-lambda-function.zip
+    ├── dashboard-proxy-function.zip
+    ├── dashboard-rds-function.zip
+└── template.yaml - A template that defines the application's AWS resources
+```
+
+## Solution Deployment Walkthrough
