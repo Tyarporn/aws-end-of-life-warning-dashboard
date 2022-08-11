@@ -150,7 +150,6 @@ Resources:
         S3Parameters:
           ManifestFileLocation:
             Bucket: !Sub '${InventoryBucketName}'
-            # Key: quicksightmanifest.json # ------------------------------NEED TO UNCOMMENT -------------
             Key: rdsmanifest.json
       Name: rdsDataSource
       Type: S3
@@ -341,7 +340,6 @@ Resources:
               Pattern: {
                  "account": [!Sub "${AWS::AccountId}"]
               }
-    # DependsOn: dbDashboardBucket
   ec2Function:
     DependsOn: eolDashboardEventbus
     Type: 'AWS::Serverless::Function'
@@ -370,7 +368,6 @@ Resources:
               Pattern: {
                  "account": [!Sub "${AWS::AccountId}"]
               }
-    # DependsOn: dbDashboardBucket
   lambdaFunction:
     DependsOn: eolDashboardEventbus
     Type: 'AWS::Serverless::Function'
@@ -399,7 +396,6 @@ Resources:
               Pattern: {
                  "account": [!Sub "${AWS::AccountId}"]
               }  
-    # DependsOn: dbDashboardBucket
   dashboardInitFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -515,7 +511,6 @@ Resources:
             Empty:
               title: "Empty Schema"
               type: "object"
-      # Name: eolDashApi
       OpenApiVersion: "3.0.1"
       StageName: stage4
       Description: 'REST API that provides optional manual trigger for EOL Dashboard refresh'
@@ -523,7 +518,6 @@ Resources:
   eolDashboardEventbus:
     Type: "AWS::Events::EventBus"
     Properties: 
-      # EventSourceName: String
       Name: 'eol-event-bus'
 
   proxyRole:
