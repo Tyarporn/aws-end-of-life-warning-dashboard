@@ -29,7 +29,6 @@ This project shows how to deploy an End-of-Life (EOL) warning dashboard that use
 ## Prerequisites
 * [An AWS account](https://signin.aws.amazon.com/signin?redirect_uri=https%3A%2F%2Fportal.aws.amazon.com%2Fbilling%2Fsignup%2Fresume&client_id=signup)
 * [AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* [Python 3](https://www.python.org/downloads/)
 * [An AWS Identity and Access Management](http://aws.amazon.com/iam)(IAM) role with appropriate access
 * [AWS QuickSight Enterprise Edition](https://aws.amazon.com/quicksight/pricing/)
 
@@ -49,26 +48,36 @@ aws-end-of-life-warning-dashboard/
 
 ## Solution Deployment Walkthrough
 At a high-level, hre are the steps to get the solution running:
-1. Deploy the solution using any IDE (This guide uses Visual Studio Code (VSCode) .
+1. Deploy the solution using any IDE (This guide uses Visual Studio Code (VS Code).
 2. Deploy the soltion with the SAM CLI if step 1 is not used.
 3. Test the solution.
 
 Detailed steps are provided below
 
-### 1. Deploy the solution using Visual Studio Code and AWS Toolkit
+### 1. Download the solution using Visual Studio Code and AWS Toolkit
 Download the code from the Github [repository](https://github.com/Tyarporn/aws-end-of-life-warning-dashboard).
 ```
 git clone https://github.com/Tyarporn/aws-end-of-life-warning-dashboard
 ```
-You can follow the steps [here](https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html) to clone the project from Github
+You can follow the steps [here]([https://www.jetbrains.com/help/pycharm/manage-projects-hosted-on-github.html](https://docs.microsoft.com/en-us/azure/developer/javascript/how-to/with-visual-studio-code/clone-github-repository?tabs=create-repo-command-palette%2Cinitialize-repo-activity-bar%2Ccreate-branch-command-palette%2Ccommit-changes-command-palette%2Cpush-command-palette)) to clone the project from Github
 You should be able to see the project as shown here, please take a moment to review the project files:
     
 ![img](assets/filesss.png)
     
-If you have not already, please set up your AWS crendentials for the [AWS Toolkit](https://aws.amazon.com/visualstudiocode/)
+If you have not already, please set up your AWS crendentials for the [AWS Toolkit](https://aws.amazon.com/visualstudiocode/). Also, ensure that the [AWS SAM CLI](https://aws.amazon.com/serverless/sam/) is installed.
     
-Right click on the project and select "Deploy SAM Application" as shown below:
+### 2. Build the solution using AWS SAM CLI
+Refer to the [Supporting Blog](https://quip-amazon.com/JzDSAn5nla0Y/End-of-Life-Warning-Dashboard) post for instructions on how to use AWS SAM CLI
+### 3. Use the solution
+Refer to the [Supporting Blog](https://quip-amazon.com/JzDSAn5nla0Y/End-of-Life-Warning-Dashboard) post for instructions on how to use the dashboard
     
-![img](assets/samdeployss.png)
+## Cleanup
+To delete the application stack using the AWS CLI you can run the following command (replace stack-name with your actual stack name).
+```
+aws cloudformation delete-stack --stack-name <stack-name>
+```
+You can also delete the CloudFormation stack in VS Code by right clicking the project in the AWS Explorer pane as shown below:
+![img](assets/samdeletess.png)
+    
     
     
