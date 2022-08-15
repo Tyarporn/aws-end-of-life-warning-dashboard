@@ -1,5 +1,5 @@
 # ignore configuration file made by SAM Script
-.toml
+*.toml
 
 # Mac files
 .DS_Store
