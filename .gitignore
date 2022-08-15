@@ -1,0 +1,8 @@
+# ignore configuration file made by SAM Script
+.toml
+
+# Mac files
+.DS_Store
+
+# SAM folder
+.aws-sam
