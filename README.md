@@ -47,7 +47,7 @@ aws-end-of-life-warning-dashboard/
 ```
 
 ## Solution Deployment Walkthrough
-At a high-level, hre are the steps to get the solution running:
+At a high-level, here are the steps to get the solution running:
 1. Deploy the solution using any IDE (This guide uses Visual Studio Code (VS Code).
 2. Deploy the soltion with the SAM CLI if step 1 is not used.
 3. Test the solution.
