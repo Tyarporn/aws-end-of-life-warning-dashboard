@@ -39,7 +39,7 @@ For more information on executing the aforementioned CLI resource commands withi
 ```
 aws-end-of-life-warning-dashboard/
 ├── assets - This has the image files used for the README.md
-├── manifests - This holds the manifest JSON files that are needed for QuickSight. These are the ones you need to change before putting into S3  
+├── manifests - This has the manifest JSON files that are needed for QuickSight. These are the files you need to change before putting into S3  
 ├── source
     ├── dashboard-ec2-function.zip
     ├── dashboard-init-function.zip
