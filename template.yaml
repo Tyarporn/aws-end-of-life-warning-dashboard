@@ -30,7 +30,7 @@ Resources:
             arn:${AWS::Partition}:quicksight:${AWS::Region}:${AWS::AccountId}:user/default/${QuickSightUserName}
       SourceEntity:
         SourceTemplate:
-          Arn: 'arn:aws:quicksight:us-east-1:294131514654:template/EOLWarningDashboard'
+          Arn: 'arn:aws:quicksight:us-east-1:294131514654:template/EOLWarningDashboardv2'
           DataSetReferences:
             - DataSetArn: !GetAtt rdsDataSet.Arn
               DataSetPlaceholder: rdsData
@@ -64,50 +64,31 @@ Resources:
           S3Source:
             DataSourceArn: !GetAtt rdsDataSource.Arn
             InputColumns:
-              - Name: version
+              - Name: DBName
                 Type: STRING
-              - Name: accountId
+              - Name: DBClass
                 Type: STRING
-              - Name: configurationItemCaptureTime
+              - Name: Engine
                 Type: STRING
-              - Name: configurationItemStatus
+              - Name: EngineVersion
                 Type: STRING
-              - Name: configurationStateId
+              - Name: Region
                 Type: STRING
-              - Name: arn
+              - Name: AvailabilityZone
                 Type: STRING
-              - Name: resourceType
+              - Name: LatestVersion
                 Type: STRING
-              - Name: resourceId
+              - Name: MajorVersionNumberStd
                 Type: STRING
-              - Name: resourceName
+              - Name: TotalMajorVersions
                 Type: STRING
-              - Name: zipLocation
+              - Name: LicenseModel
                 Type: STRING
-              - Name: awsRegion
-                Type: STRING
-              - Name: availabilityZone
-                Type: STRING
-              - Name: resourceCreationTime
-                Type: STRING
-              - Name: supplementaryConfiguration
-                Type: STRING
-              - Name: engine
-                Type: STRING
-              - Name: engineVersion
-                Type: STRING
-              - Name: latestVersion
-                Type: STRING
-              - Name: majVersionNumberStd
-                Type: STRING
-              - Name: totalMajVersions
-                Type: STRING
-              - Name: licenseModel
-                Type: STRING
-              - Name: storageType
+              - Name: StorageType
                 Type: STRING
               - Name: eolDate
                 Type: STRING
+              
       LogicalTableMap:
         MyLogicalTable:
           Source:
@@ -115,19 +96,10 @@ Resources:
           Alias: MyCSVFile
           DataTransforms:
             - CastColumnTypeOperation:
-                ColumnName: version
-                NewColumnType: DECIMAL
-            - CastColumnTypeOperation:
-                ColumnName: accountId
+                ColumnName: MajorVersionNumberStd
                 NewColumnType: INTEGER
             - CastColumnTypeOperation:
-                ColumnName: configurationStateId
-                NewColumnType: INTEGER
-            - CastColumnTypeOperation:
-                ColumnName: majVersionNumberStd
-                NewColumnType: INTEGER
-            - CastColumnTypeOperation:
-                ColumnName: totalMajVersions
+                ColumnName: TotalMajorVersions
                 NewColumnType: INTEGER
     DependsOn:
       - rdsDataSource
@@ -181,13 +153,13 @@ Resources:
           S3Source:
             DataSourceArn: !GetAtt lambdaDataSource.Arn
             InputColumns:
-              - Name: functionName
+              - Name: FunctionName
                 Type: STRING
-              - Name: functionArn
+              - Name: FunctionArn
                 Type: STRING
-              - Name: runtimeInfo
+              - Name: Runtime
                 Type: STRING
-              - Name: runtimesBehind
+              - Name: RuntimesBehind
                 Type: STRING
               - Name: eolDate
                 Type: STRING
@@ -200,7 +172,7 @@ Resources:
           Alias: MyCSVFile
           DataTransforms:
             - CastColumnTypeOperation:
-                ColumnName: runtimesBehind
+                ColumnName: RuntimesBehind
                 NewColumnType: INTEGER
             - CastColumnTypeOperation:
                 ColumnName: eolDate
@@ -232,6 +204,8 @@ Resources:
             Key: lambdamanifest.json
       Name: lambdaDataSource
       Type: S3
+    DependsOn:
+      - eolBuildData
   ec2DataSet:
     Type: 'AWS::QuickSight::DataSet'
     Properties:
@@ -311,6 +285,8 @@ Resources:
             Key: ec2manifest.json
       Name: ec2DataSource
       Type: S3
+    DependsOn:
+      - eolBuildData
 
   rdsFunction:
     DependsOn: eolDashboardEventbus
@@ -561,7 +537,7 @@ Resources:
               Version: "2012-10-17"
               Statement:
                 - Effect: Allow
-                  Action: ["config:ListDiscoveredResources", "rds:DescribeDBEngineVersions", "config:BatchGetResourceConfig", "s3:PutObject", "ec2:DescribeInstances"]
+                  Action: ["rds:DescribeDBInstances", "rds:DescribeDBEngineVersions","lambda:ListFunctions", "s3:PutObject", "ec2:DescribeInstances"]
                   Resource: '*'
 
   proxyLambdaApiPermission:
