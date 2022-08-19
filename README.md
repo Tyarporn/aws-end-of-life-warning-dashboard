@@ -10,15 +10,15 @@ This project shows how to deploy an End-of-Life (EOL) warning dashboard that use
 
 1. A) The user sends a GET method request to *API Gateway Manual Trigger*. The method request activates a Lambda integration request which triggers the *Request Proxy* function. The function invokes EventBridge command [put_events](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_events) to send an event to EventBridge.
     
-    B) A *Scheduled Rule* sends events to EventBridge on a daily basis.
+    B) The *Scheduled Rule* sends events to EventBridge on a daily basis.
     
-2. After EventBridge receives an event, the corresponding rule(s) invoke their target Lambda functions to collect configuration details. *Lambda Runtimes* and *RDS Instances* invoke Config commands [list_aggregate_discovered_resources](https://docs.aws.amazon.com/config/latest/APIReference/API_ListAggregateDiscoveredResources.html) and [batch_get_resource_config](https://docs.aws.amazon.com/config/latest/APIReference/API_BatchGetResourceConfig.html) while *EC2 Instances* invokes EC2 command [describe_instance](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.describe_instances) to perform necessary data collection.
+2. After EventBridge receives an event, the corresponding rule(s) invoke their target Lambda functions to collect configuration details. *Lambda Runtime* information is gathered using [list_functions](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda.html#Lambda.Client.list_functions), *RDS Instance* information is collected with ** [describe_db_instances,](https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-instances.html) and *EC2 instance* data is gathered with [describe_instance](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.describe_instances).
 3. Each function writes the configuration details to a CSV file which is uploaded to an S3 bucket (designated by the user upon installation) using [put_object](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object). Each upload will overwrite the previous version of the given CSV. 
-    For information on maintaining a full history of configuration captures, see the AWS documentation on [using versioning in S3 buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html).
 4. QuickSight utilizes JSON manifest files hosted in the S3 bucket to designate the CSV files as data sources. A data set is built from each source. Data sets [refresh](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html) with the latest CSV updates manually or on schedules determined and activated by the user.
 5. QuickSight loads and visualizes the data for the user and optionally sends [threshold alerts](https://docs.aws.amazon.com/quicksight/latest/user/threshold-alerts.html) in the form of email notifications if at-risk RDS or Lambda instances are detected.
 
-For more information on executing the aforementioned CLI resource commands within Lambda, see the documentation for the AWS SDK for Python ([Boto3](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)).
+For more information on executing the aforementioned CLI resource commands within Lambda, see the documentation for the AWS SDK for Python [(Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html).
+
 
 
 ### AWS Services used in the solution
