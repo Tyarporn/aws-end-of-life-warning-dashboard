@@ -388,28 +388,6 @@ Resources:
         Bucket: !Sub "${InventoryBucketName}"
         Key: dashboard-init-function.zip
 
-    
-  eventBridgeProxy:
-      Type: AWS::Serverless::Function
-      Properties:
-        Description: Proxy for manual refresh trigger
-        Handler: lambda_function.lambda_handler
-        MemorySize: 128
-        Role: !GetAtt proxyRole.Arn
-        Runtime: python3.9
-        Timeout: 900
-        CodeUri: 
-          Bucket: !Sub "${InventoryBucketName}"
-          Key: dashboard-proxy-function.zip
-        Events:
-          eolDashApi:
-              Type: Api
-              Properties:
-                  Method: get
-                  Path: /
-                  RestApiId: 
-                    Ref: eolDashApi
-
         
   eolBuildData:
     Type: 'Custom::eolBuildData'
@@ -426,16 +404,16 @@ Resources:
         openapi: "3.0.1"
         info:
           title: "eol-dashboard-API"
-          description: "API for eol dashboard (TEST)"
+          description: "REST API that provides optional manual trigger for EOL Dashboard refresh"
           version: "2022-07-07T17:49:38Z"
         servers:
-        - url: "https://mgs1byhd7d.execute-api.us-east-1.amazonaws.com/{basePath}"
+        - url: "https://4ozzr6c0ph.execute-api.us-east-1.amazonaws.com/{basePath}"
           variables:
             basePath:
-              default: "/stage4"
+              default: "/stage1"
         paths:
           /:
-            get:
+            post:
               responses:
                 "200":
                   description: "200 response"
@@ -444,51 +422,30 @@ Resources:
                       schema:
                         $ref: "#/components/schemas/Empty"
               x-amazon-apigateway-integration:
-                type: "aws"
+                credentials:  !GetAtt putEventsRole.Arn
                 httpMethod: "POST"
-                uri: !Sub "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${eventBridgeProxy}/invocations"
+                uri: "arn:aws:apigateway:${AWS::Region}:events:action/PutEvents"
                 responses:
                   default:
                     statusCode: "200"
-                passthroughBehavior: "when_no_match"
-                contentHandling: "CONVERT_TO_TEXT"
-            options:
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Methods:
-                      schema:
-                        type: "string"
-                    Access-Control-Allow-Headers:
-                      schema:
-                        type: "string"
-                  content:
-                    application/json:
-                      schema:
-                        $ref: "#/components/schemas/Empty"
-              x-amazon-apigateway-integration:
-                type: "mock"
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
                 requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: "when_no_match"
+                  application/json: "#set($context.requestOverride.header.X-Amz-Target = \"\
+                    AWSEvents.PutEvents\")\n#set($context.requestOverride.header.Content-Type\
+                    \ = \"application/x-amz-json-1.1\")\n\n#set($inputRoot = $input.path('$'))\n\
+                    {\n\"Entries\":[\n    #foreach($elem in $inputRoot.entries)\n    {\n \
+                    \       \"Resources\":[\"\"],\n        \"Detail\":\"{\\\"\\\":\\\"\\\"\
+                    }\",\n        \"DetailType\":\"String\",\n        \"EventBusName\":\"\
+                    eol-event-bus\",\n        \"Source\":\"string\"\n    }#if($foreach.hasNext),#end\n\
+                    \    #end\n]\n}\n"
+                passthroughBehavior: "when_no_templates"
+                type: "aws"
         components:
           schemas:
             Empty:
               title: "Empty Schema"
               type: "object"
       OpenApiVersion: "3.0.1"
-      StageName: stage4
+      StageName: stage1
       Description: 'REST API that provides optional manual trigger for EOL Dashboard refresh'
 
   eolDashboardEventbus:
@@ -496,7 +453,7 @@ Resources:
     Properties: 
       Name: 'eol-event-bus'
 
-  proxyRole:
+  putEventsRole:
     Type: "AWS::IAM::Role"
     Properties: 
       AssumeRolePolicyDocument :
@@ -505,12 +462,12 @@ Resources:
           - Effect: Allow
             Principal:
               Service:
-                - lambda.amazonaws.com
+                -  apigateway.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      Description: Role for Proxy Function
+      Description: Role for API Gateway Manual Trigger. Uses PutEvents to send events to EventBridge
       Policies: 
-        - PolicyName: proxyRolePolicy
+        - PolicyName: putEventsPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -539,11 +496,3 @@ Resources:
                 - Effect: Allow
                   Action: ["rds:DescribeDBInstances", "rds:DescribeDBEngineVersions","lambda:ListFunctions", "s3:PutObject", "ec2:DescribeInstances"]
                   Resource: '*'
-
-  proxyLambdaApiPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: "lambda:InvokeFunction"
-      FunctionName: !Ref eventBridgeProxy
-      Principal: "apigateway.amazonaws.com"
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${eolDashApi}/*/GET/"
